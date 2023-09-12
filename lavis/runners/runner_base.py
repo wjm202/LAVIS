@@ -33,7 +33,8 @@ from lavis.datasets.datasets.dataloader_utils import (
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader, DistributedSampler
 from torch.utils.data.dataset import ChainDataset
-
+from transformers.utils.logging import get_logger
+logger = get_logger("transformers")
 
 @registry.register_runner("runner_base")
 class RunnerBase:
@@ -190,7 +191,7 @@ class RunnerBase:
             logging.info(
                 "dataset_ratios not specified, datasets will be concatenated (map-style datasets) or chained (webdataset.DataPipeline)."
             )
-
+            
             datasets = reorg_datasets_by_split(self.datasets)
             self.datasets = concat_datasets(datasets)
 
@@ -399,7 +400,7 @@ class RunnerBase:
 
             if self.evaluate_only:
                 break
-
+            # if dist.get_world_size()>1:
             dist.barrier()
 
         # testing phase

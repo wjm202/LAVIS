@@ -23,7 +23,8 @@ from lavis.common.optims import (
 )
 from lavis.common.registry import registry
 from lavis.common.utils import now
-
+import sys
+# sys.path.insert(0, '/home/workspace/add_v2/PaddleMIX/benchmark_torch/LAVIS')
 # imports modules for registration
 from lavis.datasets.builders import *
 from lavis.models import *
@@ -31,6 +32,8 @@ from lavis.processors import *
 from lavis.runners import *
 from lavis.tasks import *
 
+# import os
+# os.chdir('/home/workspace/add_v2/PaddleMIX/benchmark_torch/LAVIS')
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Training")
@@ -91,10 +94,12 @@ def main():
     cfg.pretty_print()
 
     task = tasks.setup_task(cfg)
-    datasets = task.build_datasets(cfg)
+    from lavis.datasets.builders import load_dataset
+    coco_dataset = load_dataset("coco_caption",vis_path="/root/.paddlemix/datasets/")
     model = task.build_model(cfg)
+
     runner = get_runner_class(cfg)(
-        cfg=cfg, job_id=job_id, task=task, model=model, datasets=datasets
+        cfg=cfg, job_id=job_id, task=task, model=model, datasets=coco_dataset
     )
     runner.train()
 

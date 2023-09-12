@@ -113,6 +113,7 @@ class BaseTask:
         cuda_enabled=False,
         log_freq=50,
         accum_grad_iters=1,
+        
     ):
         return self._train_inner_loop(
             epoch=epoch,
@@ -199,8 +200,7 @@ class BaseTask:
             # In iter-based runner, we schedule the learning rate based on iterations.
             inner_epoch = start_iters // iters_per_epoch
             header = header + "; inner epoch [{}]".format(inner_epoch)
-
-        for i in metric_logger.log_every(range(iters_per_epoch), log_freq, header):
+        for i in metric_logger.log_every(range(iters_per_epoch), log_freq, header,self.batch_size_train,self.max_epoch):
             # if using iter-based runner, we stop after iters_per_epoch iterations.
             if i >= iters_per_epoch:
                 break

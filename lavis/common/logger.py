@@ -9,12 +9,11 @@ import datetime
 import logging
 import time
 from collections import defaultdict, deque
-
+from numpy import *
 import torch
 import torch.distributed as dist
 
 from lavis.common import dist_utils
-
 
 class SmoothedValue(object):
     """Track a series of values and provide access to smoothed values over a
@@ -119,7 +118,7 @@ class MetricLogger(object):
     def add_meter(self, name, meter):
         self.meters[name] = meter
 
-    def log_every(self, iterable, print_freq, header=None):
+    def log_every(self, iterable, print_freq, header=None,batch_size_train=None,max_epoch=None):
         i = 0
         if not header:
             header = ""
@@ -147,29 +146,20 @@ class MetricLogger(object):
             if i % print_freq == 0 or i == len(iterable) - 1:
                 eta_seconds = iter_time.global_avg * (len(iterable) - i)
                 eta_string = str(datetime.timedelta(seconds=int(eta_seconds)))
-                if torch.cuda.is_available():
-                    print(
-                        log_msg.format(
-                            i,
-                            len(iterable),
-                            eta=eta_string,
-                            meters=str(self),
-                            time=str(iter_time),
-                            data=str(data_time),
-                            memory=torch.cuda.max_memory_allocated() / MB,
-                        )
-                    )
-                else:
-                    print(
-                        log_msg.format(
-                            i,
-                            len(iterable),
-                            eta=eta_string,
-                            meters=str(self),
-                            time=str(iter_time),
-                            data=str(data_time),
-                        )
-                    )
+                global_step=int(header[header.find('[')+1:header.find(']')])*len(iterable)+i
+                loss = str(self)[str(self).find("loss: ")+6:]
+                ips = (1/mean(list(iter_time.deque)[-print_freq:]))*batch_size_train
+                avg_batch_cost = mean(list(iter_time.deque)[-print_freq:])
+                logging.info(
+                    "global step %d / %d, loss: %f, avg_reader_cost: %.8f sec, avg_batch_cost: %.5f sec, avg_samples: %.5f, ips: %.5f sample/sec"
+                    % (
+                        global_step,
+                        len(iterable)*max_epoch,
+                        float(loss),
+                        float(str(data_time)),
+                        avg_batch_cost,
+                        batch_size_train,
+                        ips, ))
             i += 1
             end = time.time()
         total_time = time.time() - start_time

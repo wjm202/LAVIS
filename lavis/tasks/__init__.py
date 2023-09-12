@@ -25,7 +25,8 @@ def setup_task(cfg):
     task_name = cfg.run_cfg.task
     task = registry.get_task_class(task_name).setup_task(cfg=cfg)
     assert task is not None, "Task {} not properly registered.".format(task_name)
-
+    task.batch_size_train=cfg.run_cfg.batch_size_train
+    task.max_epoch=cfg.run_cfg.max_epoch
     return task
 
 
